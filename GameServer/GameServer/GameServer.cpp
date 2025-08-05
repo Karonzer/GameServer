@@ -50,7 +50,17 @@ int main()
     
     //sockaddr_in 구조체 연동
     //    SOCKADDR_IN service  = {}; 0으로 초기화 해도됨
-    SOCKADDR_IN service = {};
+    SOCKADDR_IN service;
+
+    //memset(시작주소,값,크기);
+    //0 으로 해당 구조체(service)초기화
+    memset(&service,0,sizeof(service));
+
+    //address family : IPv4
+    service.sin_family = AF_INET;
+    service.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    service.sin_port = htons(27015);
 
     closesocket(sock);
     //winsock DLL 종료
