@@ -6,6 +6,7 @@ using namespace std;
 
 #pragma comment(lib, "ws2_32.lib") //라이브러리 블러오기
 #include <winsock2.h> //소켓 서버 만들기 위해 필요
+#include<WS2tcpip.h>
 
 int main()
 {
@@ -34,6 +35,7 @@ int main()
     //SOCK_STREAM : TCP
     //SOCK_DGRAM : UDP
 
+    //소켓
     //프로토콜  : 0 값이 0인 경우 자동으로 할당
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == INVALID_SOCKET)
@@ -48,19 +50,58 @@ int main()
         printf("socket creation\n");
     }
     
+    //정보 : 서버 주소
     //sockaddr_in 구조체 연동
-    //    SOCKADDR_IN service  = {}; 0으로 초기화 해도됨
+    //SOCKADDR_IN service  = {}; 0으로 초기화 해도됨
     SOCKADDR_IN service;
-
     //memset(시작주소,값,크기);
     //0 으로 해당 구조체(service)초기화
     memset(&service,0,sizeof(service));
-
     //address family : IPv4
     service.sin_family = AF_INET;
-    service.sin_addr.s_addr = inet_addr("127.0.0.1");
-
+   // service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    inet_pton(AF_INET, "127.0.0.1", &service);
     service.sin_port = htons(27015);
+
+    //(socket)전화기 <- 정보(service) 등록
+    //bind(소캣,주소,정보의 크기)
+    if (bind(sock, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+    {
+        //변환값이 SOCKET_ERROR 에러라면 에러 코드 확인
+        printf("bind error : %d\n", WSAGetLastError());
+
+        //만들 소켓 닫고
+        closesocket(sock);
+        //winsock DLL 종료
+        WSACleanup();
+        //프로그램 종료
+        return 1;
+    }
+
+    if (listen(sock, 10) == SOCKET_ERROR)
+    {
+        //에러 코드 확인
+        printf("listen error : %d\n", WSAGetLastError());
+
+        //만들 소켓 닫고
+        closesocket(sock);
+        //winsock DLL 종료
+        WSACleanup();
+        //프로그램 종료
+        return 1;
+    }
+
+    //프로그램 종료 하지 않게
+    while (true)
+    {
+        printf("listening...\n");
+
+        //클라이언트 접속시
+        //accept(소켓, 클라주소 담은 구조체, 구조체 크기)
+        accept(sock,NULL,NULL);//클라이언트가 접속 할때까지 대기
+
+        printf("Accept!!\n");
+    }
 
     closesocket(sock);
     //winsock DLL 종료
