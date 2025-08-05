@@ -1,15 +1,63 @@
-﻿// GameClient.cpp : 이 파일에는 'main' 함수가 포함됩니다. 거기서 프로그램 실행이 시작되고 종료됩니다.
-//
-
+﻿
 #include <iostream>
-
+using namespace std;
+#pragma comment(lib, "ws2_32.lib") //라이브러리 블러오기
+#include <winsock2.h> //소켓 서버 만들기 위해 필요
+#include<WS2tcpip.h>
 int main()
 {
-    std::cout << "GameClient Hello World!\n";
+	printf("-------GameClient--------\n");
+    WORD wVersionRequested;
 
-	while (true)
-	{
+    //windows 소캣 구현에 대한 세부 정보 받기 위해 사용
+    WSADATA wsaData;
 
-	}
+    //버전을 만들어서 넣어줌
+    wVersionRequested = MAKEWORD(2, 2);
+
+    //winsock DLL 사용을 시작
+    if (WSAStartup(wVersionRequested, &wsaData) != 0)
+    {
+        //에러 뱉어 내고 끝
+        printf("winsock filed with error\n");
+        return 1;
+    }
+
+    SOCKET connectSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (connectSocket == INVALID_SOCKET)
+    {
+        //에러 발생시 어떤 에러가 발생 했는지 확인
+        printf("socket error :%d\n", WSAGetLastError());
+        return 1;
+    }
+    else
+    {
+        // 성공적으로 소캣 성생 출력
+        printf("socket creation\n");
+    }
+
+    SOCKADDR_IN service;
+    memset(&service, 0, sizeof(service));
+    service.sin_family = AF_INET;
+    inet_pton(AF_INET, "127.0.0.1", &service.sin_addr);
+    service.sin_port = htons(5500);
+
+    //서버에 접속 service(접속할 서버 정보)
+    //connect(내 소켓, 서버의 주소, 해당 주소의 구조체 크기)
+    if (connect(connectSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+    {
+        printf("connect function error : %d\n", WSAGetLastError());
+        closesocket(connectSocket);
+        WSACleanup();
+    }
+
+    printf("connect to service");
+
+    while (true)
+    {
+        Sleep(1000);
+    }
+    closesocket(connectSocket);
+    WSACleanup();
 }
 

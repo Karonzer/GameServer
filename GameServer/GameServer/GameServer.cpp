@@ -1,6 +1,4 @@
-﻿// GameServer.cpp : 이 파일에는 'main' 함수가 포함됩니다. 거기서 프로그램 실행이 시작되고 종료됩니다.
-//
-
+﻿
 #include <iostream>
 using namespace std;
 
@@ -10,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    std::cout << "Game Server Hello World!\n";
+    printf("-----------Server----------\n");
     
     // 서버가 사용할 수 있는 windows 소캣 사양의 버전 설정
     WORD wVersionRequested;
@@ -37,8 +35,8 @@ int main()
 
     //소켓
     //프로토콜  : 0 값이 0인 경우 자동으로 할당
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == INVALID_SOCKET)
+    SOCKET listentSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (listentSocket == INVALID_SOCKET)
     {
         //에러 발생시 어떤 에러가 발생 했는지 확인
         printf("socket error :%d\n", WSAGetLastError());
@@ -59,32 +57,32 @@ int main()
     memset(&service,0,sizeof(service));
     //address family : IPv4
     service.sin_family = AF_INET;
-   // service.sin_addr.s_addr = inet_addr("127.0.0.1");
-    inet_pton(AF_INET, "127.0.0.1", &service);
-    service.sin_port = htons(27015);
+    inet_pton(AF_INET, "127.0.0.1", &service.sin_addr);
+    service.sin_port = htons(5500);
 
     //(socket)전화기 <- 정보(service) 등록
     //bind(소캣,주소,정보의 크기)
-    if (bind(sock, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+    if (bind(listentSocket, (SOCKADDR*)&service,sizeof(service)) == SOCKET_ERROR)
     {
         //변환값이 SOCKET_ERROR 에러라면 에러 코드 확인
         printf("bind error : %d\n", WSAGetLastError());
 
         //만들 소켓 닫고
-        closesocket(sock);
+        closesocket(listentSocket);
         //winsock DLL 종료
         WSACleanup();
         //프로그램 종료
         return 1;
     }
 
-    if (listen(sock, 10) == SOCKET_ERROR)
+    //listen에 바인드된 소켓 & 몇명 대기 할지 설정
+    if (listen(listentSocket, 10) == SOCKET_ERROR)
     {
         //에러 코드 확인
         printf("listen error : %d\n", WSAGetLastError());
 
         //만들 소켓 닫고
-        closesocket(sock);
+        closesocket(listentSocket);
         //winsock DLL 종료
         WSACleanup();
         //프로그램 종료
@@ -98,12 +96,21 @@ int main()
 
         //클라이언트 접속시
         //accept(소켓, 클라주소 담은 구조체, 구조체 크기)
-        accept(sock,NULL,NULL);//클라이언트가 접속 할때까지 대기
+        //accept(sock,NULL,NULL);//클라이언트가 접속 할때까지 대기
 
-        printf("Accept!!\n");
+        //클라이언트 접속시 클라이언트와 연락할 소켓을 반환
+        SOCKET acceptSocket = accept(listentSocket, NULL, NULL);
+
+        if (acceptSocket == INVALID_SOCKET)
+        {
+            printf("listen accept error : %d\n", WSAGetLastError());
+            continue;
+        }
+
+        printf("Client Connected!!\n");
     }
 
-    closesocket(sock);
+    closesocket(listentSocket);
     //winsock DLL 종료
     WSACleanup();
 }
