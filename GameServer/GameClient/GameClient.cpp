@@ -75,6 +75,32 @@ int main()
         printf("recv buffer data : %s\n", recvBuffer);
 
         printf("recv buffer Length : %d\n", recvLen);
+
+        char sendBuffer[] = "hello this is Client";
+
+        //send(클라랑 연결된 소캣, 보낼버퍼,크기,0(flags));
+        if (send(connectSocket, sendBuffer, sizeof(sendBuffer), 0) == SOCKET_ERROR)
+        {
+            //에러 코드 검사
+            printf("Send Error : %d\n : ", WSAGetLastError());
+            //클라이언트와 연결된 소켓 닫기
+            closesocket(connectSocket);
+            //처음으로 다시
+            break;
+        }
+
+        Sleep(1000);
+        //엔터를 첬을때 경우 연결 종료
+        if (GetAsyncKeyState(VK_RETURN))
+        {
+            //연결 끊기
+            //SD_RECEIVE(0) recv를 막는다 . 수신을 막는다
+            //SD_SEND(1) send를 막는다, 송신을 막는다
+            //SD_BOTH 둘다 막는다, 송수신믈 막는다
+            shutdown(connectSocket, SD_BOTH);
+        }
+
+
     }
     closesocket(connectSocket);
     WSACleanup();
