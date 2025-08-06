@@ -94,12 +94,22 @@ int main()
     {
         printf("listening...\n");
 
+        //클라이언트의 정보를 담기 위해
+        SOCKADDR_IN clientService;
+        //SOCKADDR_IN 크기
+        int addrLen = sizeof(clientService);
+        //clientService를 0으로 밀기
+        memset(&clientService, 0, sizeof(clientService));
+
+
+
         //클라이언트 접속시
         //accept(소켓, 클라주소 담은 구조체, 구조체 크기)
         //accept(sock,NULL,NULL);//클라이언트가 접속 할때까지 대기
 
         //클라이언트 접속시 클라이언트와 연락할 소켓을 반환
-        SOCKET acceptSocket = accept(listentSocket, NULL, NULL);
+        //정보를 받을 SOCKADDR_IN을 넣어주면
+        SOCKET acceptSocket = accept(listentSocket, (SOCKADDR*)&clientService, &addrLen);
 
         if (acceptSocket == INVALID_SOCKET)
         {
@@ -108,6 +118,16 @@ int main()
         }
 
         printf("Client Connected!!\n");
+
+        //IP 주소를 덤을 char 배열
+        char inAddress[16];
+
+        //IPv4와 IPv6 주소를 binary 형태에서 사람이 알아보기 쉬은 텍스로 변환
+        inet_ntop(AF_INET, &clientService.sin_addr, inAddress, sizeof(inAddress));
+
+        //접속한 클라이언트의 IP주소 출력
+        printf("client connected IP : %s\n", inAddress);
+
     }
 
     closesocket(listentSocket);
