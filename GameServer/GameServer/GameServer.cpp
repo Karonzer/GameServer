@@ -128,6 +128,21 @@ int main()
         //접속한 클라이언트의 IP주소 출력
         printf("client connected IP : %s\n", inAddress);
 
+        char sendBuffer[] = "hello this is server";
+
+        //send(클라랑 연결된 소캣, 보낼버퍼,크기,0(flags));
+        if (send(acceptSocket, sendBuffer, sizeof(sendBuffer), 0) == SOCKET_ERROR)
+        {
+            //에러 코드 검사
+            printf("Send Error : %d\n : ", WSAGetLastError());
+            //클라이언트와 연결된 소켓 닫기
+            closesocket(acceptSocket);
+            //처음으로 다시
+            continue;
+        }
+
+        printf("send Date : %s\n", sendBuffer);
+
     }
 
     closesocket(listentSocket);

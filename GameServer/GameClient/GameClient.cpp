@@ -49,15 +49,36 @@ int main()
         printf("connect function error : %d\n", WSAGetLastError());
         closesocket(connectSocket);
         WSACleanup();
+        return 1;
     }
 
     printf("connect to service");
 
     while (true)
     {
-        Sleep(1000);
+        //받을 버퍼 크기 할당 : 얼마 받을지 모르니까 우선 넉넉하게
+        char recvBuffer[512];
+
+        //받을때 까지 대기 : 블럭형 함수
+        //recv(연결된 소켓, 담을 버퍼, 버퍼의 크기,0(flags))
+        //담을 공간에다가 데이터를 쓰고
+        //얼마나 썻는지 반환 --> recvLen : 받을 데이터의 크기
+        int recvLen = recv(connectSocket, recvBuffer, sizeof(recvBuffer), 0);
+
+        if (recvLen <= 0)
+        {
+            printf("recvBuffer is Error : %d\n", WSAGetLastError());
+
+            break;
+        }
+
+        printf("recv buffer data : %s\n", recvBuffer);
+
+        printf("recv buffer Length : %d\n", recvLen);
     }
     closesocket(connectSocket);
     WSACleanup();
+
+    return 1;
 }
 
