@@ -7,26 +7,52 @@ using namespace std;
 #include <winsock2.h> //소켓 서버 만들기 위해 필요
 #include<WS2tcpip.h>
 
+
+struct Session
+{
+    WSAOVERLAPPED overlappend = {};
+    //소켓
+    SOCKET socket = INVALID_SOCKET;
+
+    char recvBuffer[512] = {};
+};
+
+    
 //또다른 쓰레드 만들어서 이 함수를 돌리기 위해서
 void RecvThread(HANDLE _iocpHandle)
 {
 
     DWORD byteTransferred = 0;
     ULONG_PTR  key = 0;
-    WSAOVERLAPPED overlAapeed = {};
+    Session* recvSession = nullptr;
+
+    printf("RecvThread session->overlappend : %p\n", recvSession);
 
     while (true)
     {
         printf("Watting...\n");
         
         //IOCP에서 작업이 완료될 때까지 대기
-        GetQueuedCompletionStatus(_iocpHandle, &byteTransferred, &key, (LPOVERLAPPED*)&overlAapeed,INFINITE);
+        GetQueuedCompletionStatus(_iocpHandle, &byteTransferred, &key, (LPOVERLAPPED*)&recvSession,INFINITE);
 
         printf("Recv Length : %d\n", byteTransferred); // 송신된 데이트 길이
         printf("Recv key : %p\n", key); //연결된 소켓의 키 출력
+        printf("RecvThread session->overlappend : %p\n", recvSession);
 
-        //걸어줘야 하는데 acceptSocket을 넣어줄 수 없어 <- send한 클라이언트랑 소통한 소켓
-        //WSARecv(acceptSocket, OUT &wsaBuf,1, OUT &recvlen, &flags,&overlappend,NULL);
+        printf("Recv : %s\n", recvSession->recvBuffer);
+
+        //수신 버퍼 및 기타 정보를 설정하여 다시 데이터 수신 준비
+        WSABUF wsaBuf;
+        wsaBuf.buf = recvSession->recvBuffer;
+        wsaBuf.len = sizeof(recvSession->recvBuffer); // 받을 메모리 크기
+
+        DWORD recvlen = 0;
+        DWORD flags = 0;
+
+
+
+        //비동기 수신을 디시 시작, 지속저그올 데이터 수선을 위해 반복
+        WSARecv(recvSession->socket, OUT &wsaBuf,1, OUT &recvlen, &flags,&recvSession->overlappend,NULL);
 
         this_thread::sleep_for(100ms);
     }
@@ -126,10 +152,10 @@ int main()
 
     thread t(RecvThread, iocpHandle);
 
-    char recvBuffer[512] = {};
     //프로그램 종료 하지 않게
     while (true)
     {
+
 
         SOCKET acceptSocket = accept(listentSocket, NULL, NULL);
 
@@ -149,19 +175,24 @@ int main()
         //클라이언트 소캣을 iocpHandle과 연결
         CreateIoCompletionPort((HANDLE)acceptSocket,iocpHandle, key,0);
 
+        Session* session = new Session;
+        session->socket = acceptSocket;
+
         //수선 버퍼 설정
         WSABUF wsaBuf;
         //공간의 주소 넣어줌 //받을 메모리 공간
-        wsaBuf.buf = recvBuffer;
+        wsaBuf.buf = session->recvBuffer;
         //recvBuffer크기는 현재 512
-        wsaBuf.len = sizeof(recvBuffer); // 받을 메모리 크기
+        wsaBuf.len = sizeof(session->recvBuffer); // 받을 메모리 크기
 
         //수신된 데ㅐ이터 길이을 저장할 변수
         DWORD recvlen = 0;
         //플래그 변수 : 현재는 사용하지 않음
         DWORD flags = 0;
         //WSAOVERLAPPED 구조체 할당 후 초기화 비동가 I/O 작업에 사용
-        WSAOVERLAPPED overlappend = {};
+        //WSAOVERLAPPED overlappend = {};
+
+
 
         //WSARecv : s 소켓, 위 acceptSocket 넣어주면 됨
         //ipbuffers :WSABUF 구조제 배열에 대한 포인터
@@ -170,7 +201,9 @@ int main()
         //ipflage : 플래그,
         //ipOverlapped : WSAOVERLAPPED 구조체에 대한 포인터
         //ipComPletIonRoution : 수신 완료 후 호출되는 콜백 함수
-        WSARecv(acceptSocket, OUT &wsaBuf,1, OUT &recvlen, &flags,&overlappend,NULL);
+        printf("main session->overlappend : %p\n", session);
+        WSARecv(acceptSocket, OUT &wsaBuf,1, OUT &recvlen, &flags,&session->overlappend,NULL);
+
     }
     
     //스레드가 다 끝날때까지 기다리는 
