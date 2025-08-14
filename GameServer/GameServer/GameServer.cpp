@@ -8,11 +8,25 @@ using namespace std;
 #include<WS2tcpip.h>
 
 //또다른 쓰레드 만들어서 이 함수를 돌리기 위해서
-void RecvThread()
+void RecvThread(HANDLE _iocpHandle)
 {
+
+    DWORD byteTransferred = 0;
+    ULONG_PTR  key = 0;
+    WSAOVERLAPPED overlAapeed = {};
+
     while (true)
     {
-        printf("Hello world\n");
+        printf("Watting...\n");
+        
+        //IOCP에서 작업이 완료될 때까지 대기
+        GetQueuedCompletionStatus(_iocpHandle, &byteTransferred, &key, (LPOVERLAPPED*)&overlAapeed,INFINITE);
+
+        printf("Recv Length : %d\n", byteTransferred); // 송신된 데이트 길이
+        printf("Recv key : %p\n", key); //연결된 소켓의 키 출력
+
+        //걸어줘야 하는데 acceptSocket을 넣어줄 수 없어 <- send한 클라이언트랑 소통한 소켓
+        //WSARecv(acceptSocket, OUT &wsaBuf,1, OUT &recvlen, &flags,&overlappend,NULL);
 
         this_thread::sleep_for(100ms);
     }
@@ -103,8 +117,16 @@ int main()
 
     printf("listening...\n");
     
-    thread t(RecvThread);
+    
+    //CreateIoCompletionPort 만드는거 뿐만 아니라
+    //CreateIoCompletionPort 소켓하고 iocpHandle 등록할때도 사용
+    //매개변수의 차이로 인해 만드는거와 등록
+    // HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE,NULL, NULL, NULL); 관찰할 수 있는 iocpHandle 만듬
+    HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE,NULL, NULL, NULL);
 
+    thread t(RecvThread, iocpHandle);
+
+    char recvBuffer[512] = {};
     //프로그램 종료 하지 않게
     while (true)
     {
@@ -121,8 +143,34 @@ int main()
             return 1;
         }
 
+        //연결된 상태
+        printf("Client acceptn\n");
+        ULONG_PTR key = 0;
+        //클라이언트 소캣을 iocpHandle과 연결
+        CreateIoCompletionPort((HANDLE)acceptSocket,iocpHandle, key,0);
 
+        //수선 버퍼 설정
+        WSABUF wsaBuf;
+        //공간의 주소 넣어줌 //받을 메모리 공간
+        wsaBuf.buf = recvBuffer;
+        //recvBuffer크기는 현재 512
+        wsaBuf.len = sizeof(recvBuffer); // 받을 메모리 크기
 
+        //수신된 데ㅐ이터 길이을 저장할 변수
+        DWORD recvlen = 0;
+        //플래그 변수 : 현재는 사용하지 않음
+        DWORD flags = 0;
+        //WSAOVERLAPPED 구조체 할당 후 초기화 비동가 I/O 작업에 사용
+        WSAOVERLAPPED overlappend = {};
+
+        //WSARecv : s 소켓, 위 acceptSocket 넣어주면 됨
+        //ipbuffers :WSABUF 구조제 배열에 대한 포인터
+        //dwBufferCount : WSABUF 구조체 갯수
+        //ipNumberOfBytesRecvd : 수신 완료 후 받을 바이트에 대한 포인터
+        //ipflage : 플래그,
+        //ipOverlapped : WSAOVERLAPPED 구조체에 대한 포인터
+        //ipComPletIonRoution : 수신 완료 후 호출되는 콜백 함수
+        WSARecv(acceptSocket, OUT &wsaBuf,1, OUT &recvlen, &flags,&overlappend,NULL);
     }
     
     //스레드가 다 끝날때까지 기다리는 
