@@ -26,7 +26,6 @@ void RecvThread(HANDLE _iocpHandle)
     ULONG_PTR  key = 0;
     Session* recvSession = nullptr;
 
-    printf("RecvThread session->overlappend : %p\n", recvSession);
 
     while (true)
     {
@@ -35,9 +34,6 @@ void RecvThread(HANDLE _iocpHandle)
         //IOCP에서 작업이 완료될 때까지 대기
         GetQueuedCompletionStatus(_iocpHandle, &byteTransferred, &key, (LPOVERLAPPED*)&recvSession,INFINITE);
 
-        printf("Recv Length : %d\n", byteTransferred); // 송신된 데이트 길이
-        printf("Recv key : %p\n", key); //연결된 소켓의 키 출력
-        printf("RecvThread session->overlappend : %p\n", recvSession);
 
         printf("Recv : %s\n", recvSession->recvBuffer);
 
@@ -54,7 +50,7 @@ void RecvThread(HANDLE _iocpHandle)
         //비동기 수신을 디시 시작, 지속저그올 데이터 수선을 위해 반복
         WSARecv(recvSession->socket, OUT &wsaBuf,1, OUT &recvlen, &flags,&recvSession->overlappend,NULL);
 
-        this_thread::sleep_for(100ms);
+        this_thread::sleep_for(1s);
     }
 }
 
