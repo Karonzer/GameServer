@@ -12,26 +12,21 @@ void ConnectThread(HANDLE _icopHandle)
 {
 
     DWORD bytesTransferred = 0;
-
-
-
     ULONG_PTR key = 0;
-
-
     WSAOVERLAPPED overlapped = {};
 
 
-
-    printf("GameClient watting..\n");
-
-
-    if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
-    {
-        printf("Connect successed\n"); // 연결 성공 메세지 출력
-    }
-
     while (true)
     {
+
+
+        printf("GameClient watting..\n");
+
+
+        if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
+        {
+            printf("Connect successed\n"); // 연결 성공 메세지 출력
+        }
         this_thread::sleep_for(1s);
     }
 }
@@ -40,6 +35,10 @@ void ConnectThread(HANDLE _icopHandle)
 int main()
 {
 	printf("-------GameClient--------\n");
+#pragma region Win Socket 시작
+
+    this_thread::sleep_for(1s);
+
     WORD wVersionRequested;
     //windows 소캣 구현에 대한 세부 정보 받기 위해 사용
     WSADATA wsaData;
@@ -52,6 +51,11 @@ int main()
         printf("winsock filed with error\n");
         return 1;
     }
+
+
+#pragma endregion 
+
+#pragma region Win Socket 만들기
     //이전 소켓 만들기
     //    SOCKET connectSocket = socket(AF_INET, SOCK_STREAM, 0);
     //소켓만들기
@@ -64,36 +68,22 @@ int main()
         return 1;
     }
 
-    //ConnnentEX 함수포인터 모드
 
-    DWORD dwBytes;
-    LPFN_CONNECTEX lpfnConnectEx = nullptr;
-    GUID guidConnectEX = WSAID_CONNECTEX;
+#pragma endregion 
 
-    if (WSAIoctl(connectSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidConnectEX, sizeof(guidConnectEX)
-        , &lpfnConnectEx, sizeof(lpfnConnectEx), &dwBytes, NULL, NULL) == SOCKET_ERROR)
-    {
-        printf("WSAIoctl error : %d\n", WSAGetLastError());
-        closesocket(connectSocket);
-        WSACleanup();
-        return 1;
-    }
-    
+#pragma region 내 주소 만들기
 
-    //서버주소
-    SOCKADDR_IN serverService;
-    memset(&serverService, 0, sizeof(serverService));
-    serverService.sin_family = AF_INET;
-    inet_pton(AF_INET, "127.0.0.1", &serverService.sin_addr);
-    serverService.sin_port = htons(5500);
-
+    //클라이언트 주소
     SOCKADDR_IN clientSevice;
     memset(&clientSevice, 0, sizeof(clientSevice));
     clientSevice.sin_family = AF_INET;
     clientSevice.sin_addr.s_addr = htonl(INADDR_ANY); // 내꺼 아무거나;
     clientSevice.sin_port = htons(0); // 임의 포트 설정 아무거나
 
-    //클라이언트 코컬 주소와 connectSocket의 바인딩 필요 == 서버와 유가
+#pragma endregion 
+
+#pragma region 내 소켓이 내 주소 연결
+    //클라이언트 로컬 주소와 connectSocket의 바인딩 필요 == 서버와 유가
     if (bind(connectSocket, (SOCKADDR*)&clientSevice, sizeof(clientSevice)) == SOCKET_ERROR)
     {
         printf("Client connectSocket,clientSevice bind error : %d\n", WSAGetLastError());
@@ -101,8 +91,9 @@ int main()
         WSACleanup();
         return 1;
     }
+#pragma endregion 
 
-
+#pragma region IOCP 관리하는 연결
     //ICOP 핸들 생성
     HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, NULL);
     ULONG_PTR key = 0;
@@ -111,9 +102,58 @@ int main()
     //스레드 실행
     thread t(ConnectThread, iocpHandle);
 
+#pragma endregion 
+
+
+   DWORD dwBytes;
+
+#pragma region 비동기 Connect 함수 만듬
+
+    //ConnnentEX 함수포인터 모드
+    LPFN_CONNECTEX lpfnConnectEx = nullptr;
+    GUID guidConnectEX = WSAID_CONNECTEX;
+
+    if (WSAIoctl(connectSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidConnectEX, sizeof(guidConnectEX)
+        , &lpfnConnectEx, sizeof(lpfnConnectEx), &dwBytes, NULL, NULL) == SOCKET_ERROR)
+    {
+        printf("WSAIoctl ConnectEx error : %d\n", WSAGetLastError());
+        closesocket(connectSocket);
+        WSACleanup();
+        return 1;
+    }
+#pragma endregion 
+
+#pragma region 비동기 DisConnect 함수 만듬
+
+    //DisConnnentEX 함수포인터 모드
+    LPFN_DISCONNECTEX lpfnDisConnectEx = nullptr;
+    //GUID도 disconnect용으로
+    GUID guidDisConnectEX = WSAID_DISCONNECTEX;
+
+    if (WSAIoctl(connectSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidDisConnectEX, sizeof(guidDisConnectEX)
+        , &lpfnDisConnectEx, sizeof(lpfnDisConnectEx), &dwBytes, NULL, NULL) == SOCKET_ERROR)
+    {
+        printf("WSAIoctl DisConnectEx error : %d\n", WSAGetLastError());
+        closesocket(connectSocket);
+        WSACleanup();
+        return 1;
+    }
+#pragma endregion 
+
+#pragma region 접속할 서버 주소 만들기
+    //서버주소
+    SOCKADDR_IN serverService;
+    memset(&serverService, 0, sizeof(serverService));
+    serverService.sin_family = AF_INET;
+    inet_pton(AF_INET, "127.0.0.1", &serverService.sin_addr);
+    serverService.sin_port = htons(5500);
+#pragma endregion 
+
     DWORD bytesTransferred = 0;
     WSAOVERLAPPED overlapped = {};
-    
+   
+#pragma region 비동기 Connect 함수 콜 == 연결해줘
+
     //connect
     if (lpfnConnectEx(connectSocket, (SOCKADDR*)&serverService, sizeof(serverService), nullptr, 0, &bytesTransferred, &overlapped) == FALSE)
     {
@@ -126,6 +166,28 @@ int main()
             return 1;
         }
     }
+
+#pragma endregion 
+
+
+
+#pragma region 비동기 disConnect 함수 콜 == 연결 끊어줘
+
+    //함수 포인터를 통해서 함수 콜
+    if (lpfnDisConnectEx(connectSocket, &overlapped,0,0) == FALSE)
+    {
+        //에러 코드가 ERROR_IO_PENDING
+        if (WSAGetLastError() != ERROR_IO_PENDING)
+        {
+            printf("Client lpfnConnectEx error : %d\n", WSAGetLastError());
+            closesocket(connectSocket);
+            WSACleanup();
+            return 1;
+        }
+    }
+
+#pragma endregion 
+
 
     t.join();
     closesocket(connectSocket);
