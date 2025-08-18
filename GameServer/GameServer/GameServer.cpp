@@ -2,11 +2,10 @@
 #include <iostream>
 #include <thread>// 쓰레드
 using namespace std;
-
 #pragma comment(lib, "ws2_32.lib") //라이브러리 블러오기
 #include <winsock2.h> //소켓 서버 만들기 위해 필요
 #include<WS2tcpip.h>
-
+#include<MSWSock.h>
 
 
     
@@ -14,8 +13,22 @@ using namespace std;
 void AcceptThread(HANDLE _iocpHandle)
 {
 
+    DWORD bytesTransferred = 0;
+    ULONG_PTR key = 0;
+    WSAOVERLAPPED overlapped = {};
+
+
     while (true)
     {
+
+
+        printf("GameServer watting..\n");
+
+
+        if (GetQueuedCompletionStatus(_iocpHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
+        {
+            printf("GameServer Clinet successed\n"); // 연결 성공 메세지 출력
+        }
         this_thread::sleep_for(1s);
     }
 }
@@ -118,18 +131,67 @@ int main()
     //매개변수의 차이로 인해 만드는거와 등록
     // HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE,NULL, NULL, NULL); 관찰할 수 있는 iocpHandle 만듬
     HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE,NULL, NULL, NULL);
-
+    ULONG_PTR key = 0;
+    CreateIoCompletionPort((HANDLE)listentSocket, iocpHandle, key, 0);
     thread t(AcceptThread, iocpHandle);
 #pragma endregion
-    //프로그램 종료 하지 않게
-    while (true)
+
+#pragma region 비동기 Accept 함수 만듬
+    DWORD dwBytes;
+    //ConnnentEX 함수포인터 모드
+    LPFN_ACCEPTEX lpfnAcceptEx = nullptr;
+    GUID guidAcceptEx = WSAID_ACCEPTEX;
+
+    if (WSAIoctl(listentSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidAcceptEx, sizeof(guidAcceptEx)
+        , &lpfnAcceptEx, sizeof(lpfnAcceptEx), &dwBytes, NULL, NULL) == SOCKET_ERROR)
     {
-
-
-
-
+        printf("WSAIoctl ConnectEx error : %d\n", WSAGetLastError());
+        closesocket(listentSocket);
+        WSACleanup();
+        return 1;
     }
-    
+#pragma endregion 
+
+
+#pragma region 빈 accepat 용 소켓 만들기
+    SOCKET acceptSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (acceptSocket == INVALID_SOCKET)
+    {
+        //에러 발생시 어떤 에러가 발생 했는지 확인
+        printf("acceptSocket error :%d\n", WSAGetLastError());
+        closesocket(listentSocket);
+        WSACleanup();
+        return 1;
+    }
+    else
+    {
+        // 성공적으로 소캣 성생 출력
+        printf("acceptSocket creation\n");
+    }
+#pragma endregion 
+
+#pragma region 비동기 accept 함수 호출
+
+    char accpetBuffer[1024];
+    WSAOVERLAPPED overlapped = {};
+    //함수포인터를 통해 연결
+    if (lpfnAcceptEx(listentSocket, acceptSocket, accpetBuffer, 0, sizeof(SOCKADDR_IN)+16, sizeof(SOCKADDR_IN) + 16,&dwBytes,
+        &overlapped )== FALSE)
+    {
+        //에러 코드가 ERROR_IO_PENDING
+        if (WSAGetLastError() != ERROR_IO_PENDING)
+        {
+            printf("sever lpfnAcceptEx error : %d\n", WSAGetLastError());
+            closesocket(listentSocket);
+            WSACleanup();
+            return 1;
+        }
+    }
+#pragma endregion 
+
+
+
+
     //스레드가 다 끝날때까지 기다리는 
     t.join();
     closesocket(listentSocket);

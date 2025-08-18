@@ -8,7 +8,7 @@ using namespace std;
 #include<MSWSock.h>
 
 
-void ConnectThread(HANDLE _icopHandle)
+void ConnectThread(HANDLE _iocpHandle)
 {
 
     DWORD bytesTransferred = 0;
@@ -23,7 +23,7 @@ void ConnectThread(HANDLE _icopHandle)
         printf("GameClient watting..\n");
 
 
-        if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
+        if (GetQueuedCompletionStatus(_iocpHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
         {
             printf("Connect successed\n"); // 연결 성공 메세지 출력
         }
