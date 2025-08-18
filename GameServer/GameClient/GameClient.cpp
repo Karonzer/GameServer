@@ -8,23 +8,46 @@ using namespace std;
 #include<MSWSock.h>
 
 
-void CoeecntThread(HANDLE _icopHandle)
+void ConnectThread(HANDLE _icopHandle)
 {
+
     DWORD bytesTransferred = 0;
+
+
+
     ULONG_PTR key = 0;
+
+
     WSAOVERLAPPED overlapped = {};
+
+
+
     printf("GameClient watting..\n");
+
 
     if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITY))
     {
-        printf("Coonnect successed\n");
+        printf("Connect successed\n"); // 연결 성공 메세지 출력
     }
+
+    //if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
+    //{
+    //    printf("Connect successed\n"); // 연결 성공 메세지 출력
+    //}
+
+
+
+
+
+
+
 
     while (true)
     {
         this_thread::sleep_for(1s);
     }
 }
+
 
 int main()
 {
@@ -98,7 +121,7 @@ int main()
     CreateIoCompletionPort((HANDLE)connectSocket, iocpHandle, key, 0);
 
     //스레드 실행
-    thread t(CoeecntThread, iocpHandle);
+    thread t(ConnectThread, iocpHandle);
 
     DWORD bytesTransferred = 0;
     WSAOVERLAPPED overlapped = {};
