@@ -25,22 +25,10 @@ void ConnectThread(HANDLE _icopHandle)
     printf("GameClient watting..\n");
 
 
-    if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITY))
+    if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
     {
         printf("Connect successed\n"); // 연결 성공 메세지 출력
     }
-
-    //if (GetQueuedCompletionStatus(_icopHandle, &bytesTransferred, &key, (LPOVERLAPPED*)&overlapped, INFINITE))
-    //{
-    //    printf("Connect successed\n"); // 연결 성공 메세지 출력
-    //}
-
-
-
-
-
-
-
 
     while (true)
     {
