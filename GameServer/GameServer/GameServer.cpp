@@ -20,7 +20,7 @@ struct Session
     WSAOVERLAPPED overlappend = {};
     //소켓
     SOCKET socket = INVALID_SOCKET;
-    IO_TYPE type;
+    IO_TYPE type = NONE;
     char recvBuffer[512] = {};
     char sendBuffer[512] = {};
 };
@@ -191,7 +191,7 @@ int main()
         }
 
         //연결된 상태
-        printf("Client acceptn\n");
+        printf("Client connected\n");
         ULONG_PTR key = 0;
         //클라이언트 소캣을 iocpHandle과 연결
         CreateIoCompletionPort((HANDLE)acceptSocket,iocpHandle, key,0);
