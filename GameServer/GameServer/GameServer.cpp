@@ -7,24 +7,32 @@ using namespace std;
 #include <winsock2.h> //소켓 서버 만들기 위해 필요
 #include<WS2tcpip.h>
 
+enum IO_TYPE
+{
+    NONE,
+    SEND,
+    RECV
+};
+
 
 struct Session
 {
     WSAOVERLAPPED overlappend = {};
     //소켓
     SOCKET socket = INVALID_SOCKET;
-
+    IO_TYPE type;
     char recvBuffer[512] = {};
+    char sendBuffer[512] = {};
 };
 
     
 //또다른 쓰레드 만들어서 이 함수를 돌리기 위해서
-void RecvThread(HANDLE _iocpHandle)
+void SendRecvThread(HANDLE _iocpHandle)
 {
 
     DWORD byteTransferred = 0;
     ULONG_PTR  key = 0;
-    Session* recvSession = nullptr;
+    Session* session = nullptr;
 
 
     while (true)
@@ -32,23 +40,40 @@ void RecvThread(HANDLE _iocpHandle)
         printf("Watting...\n");
         
         //IOCP에서 작업이 완료될 때까지 대기
-        GetQueuedCompletionStatus(_iocpHandle, &byteTransferred, &key, (LPOVERLAPPED*)&recvSession,INFINITE);
+        GetQueuedCompletionStatus(_iocpHandle, &byteTransferred, &key, (LPOVERLAPPED*)&session, INFINITE);
 
 
-        printf("Recv : %s\n", recvSession->recvBuffer);
+
 
         //수신 버퍼 및 기타 정보를 설정하여 다시 데이터 수신 준비
         WSABUF wsaBuf;
-        wsaBuf.buf = recvSession->recvBuffer;
-        wsaBuf.len = sizeof(recvSession->recvBuffer); // 받을 메모리 크기
+        wsaBuf.buf = session->recvBuffer;
+        wsaBuf.len = sizeof(session->recvBuffer); // 받을 메모리 크기
 
-        DWORD recvlen = 0;
+        DWORD dateBufferlen = 0;
         DWORD flags = 0;
 
 
+        switch (session->type)
+        {
+        case SEND:
+            printf("SEND : %s\n", session->sendBuffer);
+            session->type = RECV;
+            //비동기 수신을 디시 시작, 지속저그올 데이터 수선을 위해 반복
+            WSARecv(session->socket, OUT & wsaBuf, 1, OUT & dateBufferlen, &flags, &session->overlappend, NULL);
 
-        //비동기 수신을 디시 시작, 지속저그올 데이터 수선을 위해 반복
-        WSARecv(recvSession->socket, OUT &wsaBuf,1, OUT &recvlen, &flags,&recvSession->overlappend,NULL);
+            break;
+        case RECV:
+            printf("Recv : %s\n", session->recvBuffer);
+            session->type = SEND;
+            //비동기 수신을 디시 시작, 지속저그올 데이터 수선을 위해 반복
+            WSASend(session->socket, &wsaBuf, 1, &dateBufferlen, flags, &session->overlappend, NULL);
+
+            break;
+
+        }
+
+
 
         this_thread::sleep_for(1s);
     }
@@ -146,7 +171,7 @@ int main()
     // HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE,NULL, NULL, NULL); 관찰할 수 있는 iocpHandle 만듬
     HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE,NULL, NULL, NULL);
 
-    thread t(RecvThread, iocpHandle);
+    thread recvThread(SendRecvThread, iocpHandle);
 
     //프로그램 종료 하지 않게
     while (true)
@@ -173,7 +198,7 @@ int main()
 
         Session* session = new Session;
         session->socket = acceptSocket;
-
+        session->type = RECV;
         //수선 버퍼 설정
         WSABUF wsaBuf;
         //공간의 주소 넣어줌 //받을 메모리 공간
@@ -203,7 +228,7 @@ int main()
     }
     
     //스레드가 다 끝날때까지 기다리는 
-    t.join();
+    recvThread.join();
     closesocket(listentSocket);
     //winsock DLL 종료
     WSACleanup();
