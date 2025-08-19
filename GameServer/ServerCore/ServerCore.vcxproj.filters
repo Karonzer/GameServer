@@ -1,23 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Main">
-      <UniqueIdentifier>{7f185ac7-eb1e-457d-b6dd-2fcc3cd076e1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PCH">
-      <UniqueIdentifier>{8542acca-b1e7-4b6e-a1bd-e9cecd28331f}</UniqueIdentifier>
+      <UniqueIdentifier>{26b5adcb-a61c-4fbd-99de-9a717e3d184a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GameServer.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>PCH</Filter>
+    </ClCompile>
+    <ClCompile Include="CorePch.cpp">
       <Filter>PCH</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="CorePch.h">
       <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
