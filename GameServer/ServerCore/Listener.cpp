@@ -17,7 +17,7 @@ Listener::~Listener()
 bool Listener::StartAccept(Service& service)
 {
 
-#pragma region ¹Ş´Â ¼ÒÄÏ ¸¸µé±â
+#pragma region ë°›ëŠ” ì†Œì¼“ ë§Œë“¤ê¸°
 	socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (socket == INVALID_SOCKET)
 	{
@@ -27,29 +27,29 @@ bool Listener::StartAccept(Service& service)
 	}
 #pragma endregion 
 
-#pragma region ¼­¹ö ÁÖ¼Ò¿Í ¹ŞÀº ¼ÒÄÏ ¿¬°á
+#pragma region ì„œë²„ ì£¼ì†Œì™€ ë°›ì€ ì†Œì¼“ ì—°ê²°
 	if (bind(socket, (SOCKADDR*)&service.GetSockAddr(), sizeof(service.GetSockAddr())) == SOCKET_ERROR)
 	{
-		//º¯È¯°ªÀÌ SOCKET_ERROR ¿¡·¯¶ó¸é ¿¡·¯ ÄÚµå È®ÀÎ
+		//ë³€í™˜ê°’ì´ SOCKET_ERROR ì—ëŸ¬ë¼ë©´ ì—ëŸ¬ ì½”ë“œ í™•ì¸
 		printf("Listener bind error : %d\n", WSAGetLastError());
 
 		return false;
 	}
 #pragma endregion 
 
-#pragma region ¹ŞÀ» ÁØºñ ÇÏ±â
+#pragma region ë°›ì„ ì¤€ë¹„ í•˜ê¸°
 	if (listen(socket, SOMAXCONN) == SOCKET_ERROR)
 	{
-		//¿¡·¯ ÄÚµå È®ÀÎ
+		//ì—ëŸ¬ ì½”ë“œ í™•ì¸
 		printf("Listener listen error : %d\n", WSAGetLastError());
 		return false;
 	}
 
 #pragma endregion 
 	printf("listening...\n");
-#pragma region ºñµ¿±â Accept ÇÔ¼ö ¸¸µë
+#pragma region ë¹„ë™ê¸° Accept í•¨ìˆ˜ ë§Œë“¬
 	DWORD dwBytes;
-	//ConnnentEX ÇÔ¼öÆ÷ÀÎÅÍ ¸ğµå
+	//ConnnentEX í•¨ìˆ˜í¬ì¸í„° ëª¨ë“œ
 	LPFN_ACCEPTEX lpfnAcceptEx = nullptr;
 	GUID guidAcceptEx = WSAID_ACCEPTEX;
 
@@ -62,34 +62,34 @@ bool Listener::StartAccept(Service& service)
 	
 #pragma endregion 
 
-#pragma region ºó accepat ¿ë ¼ÒÄÏ ¸¸µé±â
+#pragma region ë¹ˆ accepat ìš© ì†Œì¼“ ë§Œë“¤ê¸°
 	SOCKET acceptSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (acceptSocket == INVALID_SOCKET)
 	{
-		//¿¡·¯ ¹ß»ı½Ã ¾î¶² ¿¡·¯°¡ ¹ß»ı Çß´ÂÁö È®ÀÎ
+		//ì—ëŸ¬ ë°œìƒì‹œ ì–´ë–¤ ì—ëŸ¬ê°€ ë°œìƒ í–ˆëŠ”ì§€ í™•ì¸
 		printf("acceptSocket error :%d\n", WSAGetLastError());
 		return false;
 	}
 	else
 	{
-		// ¼º°øÀûÀ¸·Î ¼ÒÄ¹ ¼º»ı Ãâ·Â
+		// ì„±ê³µì ìœ¼ë¡œ ì†Œìº£ ì„±ìƒ ì¶œë ¥
 		printf("acceptSocket creation\n");
 	}
 #pragma endregion 
 
-#pragma region IOCP ÇÚµé °üÂûÀÚ »ı¼º  
+#pragma region IOCP í•¸ë“¤ ê´€ì°°ì ìƒì„±  
 	ULONG_PTR key = 0;
 	CreateIoCompletionPort((HANDLE)socket, iocpHandle, key, 0);
 #pragma endregion 
 
-#pragma region ºñµ¿±â accept ÇÔ¼ö È£Ãâ
+#pragma region ë¹„ë™ê¸° accept í•¨ìˆ˜ í˜¸ì¶œ
 	char accpetBuffer[1024];
 	WSAOVERLAPPED overlapped = {};
-	//ÇÔ¼öÆ÷ÀÎÅÍ¸¦ ÅëÇØ ¿¬°á
+	//í•¨ìˆ˜í¬ì¸í„°ë¥¼ í†µí•´ ì—°ê²°
 	if (lpfnAcceptEx(socket, acceptSocket, accpetBuffer, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &dwBytes,
 		&overlapped) == FALSE)
 	{
-		//¿¡·¯ ÄÚµå°¡ ERROR_IO_PENDING
+		//ì—ëŸ¬ ì½”ë“œê°€ ERROR_IO_PENDING
 		if (WSAGetLastError() != ERROR_IO_PENDING)
 		{
 			printf("sever lpfnAcceptEx error : %d\n", WSAGetLastError());

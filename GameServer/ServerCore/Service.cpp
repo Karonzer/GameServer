@@ -13,12 +13,12 @@ Service::Service(wstring _ip, uint16 _port)
 
 
 
-    ////Á¤º¸ : ¼­¹ö ÁÖ¼Ò
-    ////sockaddr_in ±¸Á¶Ã¼ ¿¬µ¿
-    ////SOCKADDR_IN service  = {}; 0À¸·Î ÃÊ±âÈ­ ÇØµµµÊ
+    ////ì •ë³´ : ì„œë²„ ì£¼ì†Œ
+    ////sockaddr_in êµ¬ì¡°ì²´ ì—°ë™
+    ////SOCKADDR_IN service  = {}; 0ìœ¼ë¡œ ì´ˆê¸°í™” í•´ë„ë¨
     //SOCKADDR_IN service;
-    ////memset(½ÃÀÛÁÖ¼Ò,°ª,Å©±â);
-    ////0 À¸·Î ÇØ´ç ±¸Á¶Ã¼(service)ÃÊ±âÈ­
+    ////memset(ì‹œì‘ì£¼ì†Œ,ê°’,í¬ê¸°);
+    ////0 ìœ¼ë¡œ í•´ë‹¹ êµ¬ì¡°ì²´(service)ì´ˆê¸°í™”
     //memset(&service, 0, sizeof(service));
     ////address family : IPv4
     //service.sin_family = AF_INET;
