@@ -71,12 +71,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>$(SolutionDir)Libs\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(SolutionDir)ServerCore\;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Libs\$(Configuration)\</OutDir>
+    <LibraryPath>$(SolutionDir)Libs\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)ServerCore\;$(IncludePath)</IncludePath>
-    <LibraryPath>&amp;(SolutionDir)Libs\;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)Libs\$(Configuration)\</OutDir>
+    <LibraryPath>$(SolutionDir)Libs\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

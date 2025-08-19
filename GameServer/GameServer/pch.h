@@ -5,7 +5,10 @@
 #pragma comment(lib, "Debug\\ServerCore.lib")  //Debug 모드일때
 #else
 #pragma comment(lib, "Release\\ServerCore.lib")  //Release 모드일때
-#endif // _DEBUG
+#endif
+
+#include<CorePch.h>
 
 
-#include <CorePch.h>
+
+

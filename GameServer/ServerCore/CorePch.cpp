@@ -3,5 +3,5 @@
 
 void HelloWorld()
 {
-	cout << "Hello world" << endl;
+	cout << "test server" << endl;
 }
