@@ -4,7 +4,7 @@
 
 Listener::Listener()
 {
-	HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, NULL);
+    iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, NULL);
 
 }
 
@@ -27,7 +27,7 @@ bool Listener::StartAccept(Service& service)
 	}
 #pragma endregion 
 
-#pragma region 서버 주소와 받은 소켓 연결
+#pragma region
 	if (bind(socket, (SOCKADDR*)&service.GetSockAddr(), sizeof(service.GetSockAddr())) == SOCKET_ERROR)
 	{
 		//변환값이 SOCKET_ERROR 에러라면 에러 코드 확인
@@ -37,7 +37,7 @@ bool Listener::StartAccept(Service& service)
 	}
 #pragma endregion 
 
-#pragma region 받을 준비 하기
+#pragma region
 	if (listen(socket, SOMAXCONN) == SOCKET_ERROR)
 	{
 		//에러 코드 확인
@@ -77,7 +77,7 @@ bool Listener::StartAccept(Service& service)
 	}
 #pragma endregion 
 
-#pragma region IOCP 핸들 관찰자 생성  
+#pragma region
 	ULONG_PTR key = 0;
 	CreateIoCompletionPort((HANDLE)socket, iocpHandle, key, 0);
 #pragma endregion 

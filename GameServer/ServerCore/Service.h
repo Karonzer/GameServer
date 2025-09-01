@@ -5,7 +5,7 @@ class Service
 private:
 	SOCKADDR_IN sockAddr = {};
 public:
-	SOCKADDR_IN GetSockAddr() const { return sockAddr; }
+	SOCKADDR_IN& GetSockAddr(){ return sockAddr; }
 
 public:
 	//Service(wstring ip, u_short port);
