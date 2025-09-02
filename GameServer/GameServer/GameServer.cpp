@@ -1,7 +1,8 @@
-﻿#pragma once
+#pragma once
 #include "pch.h"
 #include <Service.h>
 #include <Listener.h>
+#include <IocpCore.h>
 
 
 //또다른 쓰레드 만들어서 이 함수를 돌리기 위해서
@@ -34,14 +35,17 @@ int main()
 
 
 
-    Service service(L"127.0.0.1", 5500);
+    Service* serverService = new Service(L"127.0.0.1", 5500);
 
 
-    Listener listener;
-    thread t(AcceptThread, listener.GetHandle());
-    listener.StartAccept(service);
+
+    thread t(AcceptThread, serverService->GetIocpCore()->GetHandle());
+    serverService->Start();
 
     t.join();
+
+    delete serverService;
+
 
     return 0;
 }

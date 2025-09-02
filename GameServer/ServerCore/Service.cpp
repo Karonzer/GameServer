@@ -1,17 +1,12 @@
 #include "pch.h"
 #include "Service.h"
+#include "SocketHelper.h"
+#include "IocpCore.h"
+#include "Listener.h"
 
 Service::Service(wstring _ip, uint16 _port)
 {
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-    {
-        printf("WSAStarup filed with error\n");
-        return;
-    }
-
-
-
+    SocketHelper::StartUp();
 
     ////정보 : 서버 주소
     ////sockaddr_in 구조체 연동
@@ -31,11 +26,28 @@ Service::Service(wstring _ip, uint16 _port)
     sockAddr.sin_addr = address;
     sockAddr.sin_port = htons(_port);
 
-
+    iocpCore = new IocpCore;
 
 }
 
 Service::~Service()
 {
+    if (iocpCore != nullptr)
+    {
+        delete iocpCore;
+        iocpCore = nullptr;
+    }
+
+    if (listener != nullptr)
+    {
+        delete listener;
+        listener = nullptr;
+    }
     WSACleanup();
+}
+
+bool Service::Start()
+{
+    listener = new Listener;
+    return listener->StartAccept(this);
 }
