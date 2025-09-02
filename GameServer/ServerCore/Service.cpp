@@ -51,3 +51,12 @@ bool Service::Start()
     listener = new Listener;
     return listener->StartAccept(this);
 }
+
+bool Service::ObserveIO(DWORD time)
+{
+    if (iocpCore != nullptr)
+    {
+        return iocpCore->ObserveIO(time);
+    }
+    return false;
+}

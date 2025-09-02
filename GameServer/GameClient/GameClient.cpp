@@ -1,4 +1,4 @@
-﻿
+
 #include <iostream>
 #include <thread>// 쓰레드
 using namespace std;
@@ -93,7 +93,7 @@ int main()
     }
 #pragma endregion 
 
-#pragma region IOCP 관리하는 연결
+#pragma region
     //ICOP 핸들 생성
     HANDLE iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, NULL);
     ULONG_PTR key = 0;

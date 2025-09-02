@@ -19,7 +19,7 @@ public:
 
 public:
     bool Start();
-
+    bool ObserveIO(DWORD time = INFINITE);
 
 };
 
